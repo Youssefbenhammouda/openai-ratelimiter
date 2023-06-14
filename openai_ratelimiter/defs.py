@@ -1,9 +1,11 @@
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
-from .base import CL100K_ENCODER, P50K_ENCODER, __BaseAPILimiterRedis
+from .base import CL100K_ENCODER, P50K_ENCODER, BaseAPILimiterRedis
 
 
-def num_tokens_consumed_by_chat_request(messages, max_tokens=15, n=1, **kwargs):
+def num_tokens_consumed_by_chat_request(
+    messages: List[Dict[str, str]], max_tokens: int = 15, n: int = 1
+):
     num_tokens = n * max_tokens
     for message in messages:
         num_tokens += (
@@ -21,7 +23,7 @@ def num_tokens_consumed_by_chat_request(messages, max_tokens=15, n=1, **kwargs):
 
 
 def num_tokens_consumed_by_completion_request(
-    prompt: Union[str, list], max_tokens=15, n=1, **kwargs
+    prompt: Union[str, list[str], Any], max_tokens: int = 15, n: int = 1
 ):
     num_tokens = n * max_tokens
     if isinstance(prompt, str):  # Single prompt
@@ -37,13 +39,13 @@ def num_tokens_consumed_by_completion_request(
     return num_tokens
 
 
-class ChatCompletionLimiter(__BaseAPILimiterRedis):
-    def limit(self, messages: List[Dict], max_tokens):
+class ChatCompletionLimiter(BaseAPILimiterRedis):
+    def limit(self, messages: List[Dict[str, str]], max_tokens: int):
         tokens = num_tokens_consumed_by_chat_request(messages, max_tokens)
         return self._limit(tokens)
 
 
-class textCompletionLimiter(__BaseAPILimiterRedis):
-    def limit(self, prompt: str, max_tokens):
+class TextCompletionLimiter(BaseAPILimiterRedis):
+    def limit(self, prompt: str, max_tokens: int):
         tokens = num_tokens_consumed_by_completion_request(prompt, max_tokens)
         return self._limit(tokens)
