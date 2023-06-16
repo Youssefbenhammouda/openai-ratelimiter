@@ -5,7 +5,7 @@ openai-ratelimiter is a simple and efficient rate limiter for the OpenAI API. It
 
 ## Installation
 
-To install the openai-ratelimiter library, use pip:
+To install the [openai-ratelimiter](https://pypi.org/project/openai-ratelimiter/) library, use pip:
 
 ```shell
 pip install openai-ratelimiter
@@ -79,7 +79,7 @@ with textlimiter.limit(prompt=prompt, max_tokens=max_tokens):
     )
     ...
 ```
-Note: The rate limits (RPM and TPM) and the Redis host and port provided in the examples are not universal and should be tailored to your specific use case. Please adjust these parameters in accordance with the selected model and your account's rate limits. To find your specific rate limits, please refer to your OpenAI account settings at OpenAI Rate Limits.
+Note: The rate limits (RPM and TPM) and the Redis host and port provided in the examples are not universal and should be tailored to your specific use case. Please adjust these parameters in accordance with the selected model and your account's rate limits. To find your specific rate limits, please refer to your OpenAI [account settings at OpenAI Rate Limits](https://platform.openai.com/account/rate-limits).
 
 ## Asynchronous Programming Support
 
@@ -166,7 +166,7 @@ async def main():
 asyncio.run(main())
 ```
 
-Note: The rate limits (RPM and TPM) and the Redis host and port provided in the examples are not universal and should be tailored to your specific use case. Please adjust these parameters in accordance with the selected model and your account's rate limits. To find your specific rate limits, please refer to your OpenAI account settings at OpenAI Rate Limits.
+Note: The rate limits (RPM and TPM) and the Redis host and port provided in the examples are not universal and should be tailored to your specific use case. Please adjust these parameters in accordance with the selected model and your account's rate limits. To find your specific rate limits, please refer to your [OpenAI account settings at OpenAI Rate Limits](https://platform.openai.com/account/rate-limits).
 
 
 ## Future Plans
