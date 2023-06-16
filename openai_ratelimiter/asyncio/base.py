@@ -2,9 +2,9 @@ import time
 import types
 from typing import Optional, Type
 
-import redis
+import redis.asyncio as redis
 import tiktoken
-from redis.lock import Lock
+from redis.asyncio.lock import Lock
 
 # Tokenizer
 CL100K_ENCODER = tiktoken.get_encoding("cl100k_base")
@@ -12,7 +12,7 @@ P50K_ENCODER = tiktoken.get_encoding("p50k_base")
 period = 60
 
 
-class Limiter:
+class AsyncLimiter:
     def __init__(
         self,
         model_name: str,
@@ -29,37 +29,39 @@ class Limiter:
         self.tokens = tokens
         self.redis = redis
 
-    def __enter__(self):
+    async def __aenter__(self):
         lock = Lock(self.redis, f"{self.model_name}_lock", timeout=self.period)
 
-        with lock:
+        async with lock:
             while True:
-                self.current_calls = self.redis.incr(
+                self.current_calls = await self.redis.incr(
                     f"{self.model_name}_api_calls", amount=1
                 )
                 if self.current_calls == 1:
-                    self.redis.expire(f"{self.model_name}_api_calls", self.period)
+                    await self.redis.expire(f"{self.model_name}_api_calls", self.period)
                 if self.current_calls <= self.max_calls:
                     break
                 else:
-                    lock.release()  # Release the lock before sleeping
+                    await lock.release()  # Release the lock before sleeping
                     time.sleep(self.period)  # wait for the limit to reset
-                    lock.acquire()
+                    await lock.acquire()
 
             while True:
-                self.current_tokens = self.redis.incrby(
+                self.current_tokens = await self.redis.incrby(
                     f"{self.model_name}_api_tokens", self.tokens
                 )
                 if self.current_tokens == self.tokens:
-                    self.redis.expire(f"{self.model_name}_api_tokens", self.period)
+                    await self.redis.expire(
+                        f"{self.model_name}_api_tokens", self.period
+                    )
                 if self.current_tokens <= self.max_tokens:
                     break
                 else:
-                    lock.release()  # Release the lock before sleeping
+                    await lock.release()  # Release the lock before sleeping
                     time.sleep(self.period)  # wait for the limit to reset
-                    lock.acquire()
+                    await lock.acquire()
 
-    def __exit__(
+    async def __aexit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_value: Optional[BaseException],
@@ -68,7 +70,7 @@ class Limiter:
         pass
 
 
-class BaseAPILimiterRedis:
+class AsyncBaseAPILimiterRedis:
     def __init__(
         self,
         model_name: str,
@@ -96,10 +98,10 @@ class BaseAPILimiterRedis:
         self.max_calls = RPM
         self.max_tokens = TPM
         self.period = period
-        self.redis: redis.Redis[bytes] = redis.Redis(host=redis_host, port=redis_port)
+        self.redis: "redis.Redis[bytes]" = redis.Redis(host=redis_host, port=redis_port)
 
-    def _limit(self, tokens: int):
-        return Limiter(
+    def _limit(self, tokens: int) -> AsyncLimiter:
+        return AsyncLimiter(
             self.model_name,
             self.max_calls,
             self.max_tokens,
