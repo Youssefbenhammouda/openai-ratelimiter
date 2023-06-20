@@ -3,6 +3,8 @@
 
 openai-ratelimiter is a simple and efficient rate limiter for the OpenAI API. It is designed to help prevent the API rate limit from being reached when using the OpenAI library. Currently, it supports only Redis as the caching service.
 
+> **Note**: This package has been tested with Python 3.11.4.
+
 ## Installation
 
 To install the [openai-ratelimiter](https://pypi.org/project/openai-ratelimiter/) library, use pip:
@@ -81,6 +83,53 @@ with textlimiter.limit(prompt=prompt, max_tokens=max_tokens):
 ```
 Note: The rate limits (RPM and TPM) and the Redis host and port provided in the examples are not universal and should be tailored to your specific use case. Please adjust these parameters in accordance with the selected model and your account's rate limits. To find your specific rate limits, please refer to your OpenAI [account settings at OpenAI Rate Limits](https://platform.openai.com/account/rate-limits).
 
+
+
+## Available Methods for Limiter Classes 
+
+The following methods are available in all Limiter classes including `ChatCompletionLimiter`, `AsyncChatCompletionLimiter`, `BaseAPILimiterRedis`, and `AsyncBaseAPILimiterRedis`:
+
+#### `clear_locks()`
+
+The `clear_locks()` method is used to remove all locks that are currently associated with the model. This method is useful when you need to manually reset the lock state.
+
+Usage:
+
+```python
+limiter = AsyncChatCompletionLimiter(
+        model_name=model_name,
+        RPM=3_000,  
+        TPM=180_000,  
+        redis_host="localhost",
+        redis_port=6379,
+    )
+success = limiter.clear_locks()
+```
+
+In this example, `success` will be `True` if the locks were cleared successfully, otherwise it will be `False`.
+
+#### `is_locked(messages: List[Dict[str, str]], max_tokens: int)`
+
+The `is_locked()` method is used to check if the request would be locked given the specified messages and max tokens.
+
+Usage:
+
+```python
+limiter = AsyncChatCompletionLimiter(
+        model_name=model_name,
+        RPM=3_000,  
+        TPM=180_000,  
+        redis_host="localhost",
+        redis_port=6379,
+    )
+messages = [{"role": "system", "content": "You are a helpful assistant."}]
+max_tokens = 200
+lock_state = limiter.is_locked(messages=messages, max_tokens=max_tokens)
+```
+
+In this example, `lock_state` will be `True` if the request would be locked given the messages and max tokens, otherwise it will be `False`.
+
+This should provide users with a clear understanding of how to use the `clear_locks` and `is_locked` methods with any of the Limiter classes.
 ## Asynchronous Programming Support
 
 This library also provides support for asynchronous programming with two classes: `AsyncChatCompletionLimiter` and `AsyncTextCompletionLimiter`. You can import these classes as follows:

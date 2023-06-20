@@ -44,8 +44,17 @@ class ChatCompletionLimiter(BaseAPILimiterRedis):
         tokens = num_tokens_consumed_by_chat_request(messages, max_tokens)
         return self._limit(tokens)
 
+    def is_locked(self, messages: List[Dict[str, str]], max_tokens: int) -> bool:
+        """Returns True if the request would be locked, False otherwise."""
+        tokens = num_tokens_consumed_by_chat_request(messages, max_tokens)
+        return self._is_locked(tokens)
+
 
 class TextCompletionLimiter(BaseAPILimiterRedis):
     def limit(self, prompt: str, max_tokens: int):
         tokens = num_tokens_consumed_by_completion_request(prompt, max_tokens)
         return self._limit(tokens)
+
+    def is_locked(self, prompt: str, max_tokens: int) -> bool:
+        tokens = num_tokens_consumed_by_completion_request(prompt, max_tokens)
+        return self._is_locked(tokens)

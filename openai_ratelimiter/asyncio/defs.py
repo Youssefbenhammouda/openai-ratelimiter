@@ -44,8 +44,16 @@ class AsyncChatCompletionLimiter(AsyncBaseAPILimiterRedis):
         tokens = num_tokens_consumed_by_chat_request(messages, max_tokens)
         return self._limit(tokens)
 
+    async def is_locked(self, messages: List[Dict[str, str]], max_tokens: int) -> bool:
+        tokens = num_tokens_consumed_by_chat_request(messages, max_tokens)
+        return await self._is_locked(tokens)
+
 
 class AsyncTextCompletionLimiter(AsyncBaseAPILimiterRedis):
     def limit(self, prompt: str, max_tokens: int) -> AsyncLimiter:
         tokens = num_tokens_consumed_by_completion_request(prompt, max_tokens)
         return self._limit(tokens)
+
+    async def is_locked(self, prompt: str, max_tokens: int) -> bool:
+        tokens = num_tokens_consumed_by_completion_request(prompt, max_tokens)
+        return await self._is_locked(tokens)

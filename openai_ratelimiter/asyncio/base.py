@@ -100,6 +100,11 @@ class AsyncBaseAPILimiterRedis:
         self.period = period
         self.redis: "redis.Redis[bytes]" = redis.Redis(host=redis_host, port=redis_port)
 
+    async def check_redis(
+        self,
+    ):
+        assert (await self.redis.ping()) == True
+
     def _limit(self, tokens: int) -> AsyncLimiter:
         return AsyncLimiter(
             self.model_name,
@@ -109,3 +114,39 @@ class AsyncBaseAPILimiterRedis:
             tokens,
             self.redis,
         )
+
+    async def clear_locks(self) -> bool:
+        """
+        This method will clear all locks associated with the model.
+        returns True if the locks were cleared successfully, otherwise returns False.
+        """
+        keys_to_delete = await self.redis.keys(f"{self.model_name}_*")
+        if keys_to_delete:
+            await self.redis.delete(*keys_to_delete)
+            return True
+        return False
+
+    async def _is_locked(self, tokens: int) -> bool:
+        """
+        This method will check if there are any locks associated with the model.
+
+        Args:
+            tokens (int): The number of tokens to be used for the check.
+
+        Returns:
+            bool: True if the lock is held, False otherwise.
+        """
+        api_calls_key_exists = await self.redis.exists(f"{self.model_name}_api_calls")
+        api_tokens_key_exists = await self.redis.exists(f"{self.model_name}_api_tokens")
+
+        # If both keys exist and their values exceed the allowed limits, return True
+        if api_calls_key_exists and api_tokens_key_exists:
+            current_calls = int((await self.redis.get(f"{self.model_name}_api_calls")))  # type: ignore
+            current_tokens = int((await self.redis.get(f"{self.model_name}_api_tokens")))  # type: ignore
+            if (
+                current_calls >= self.max_calls
+                or current_tokens + tokens > self.max_tokens
+            ):
+                return True
+
+        return False

@@ -97,6 +97,12 @@ class BaseAPILimiterRedis:
         self.max_tokens = TPM
         self.period = period
         self.redis: redis.Redis[bytes] = redis.Redis(host=redis_host, port=redis_port)
+        try:
+            assert self.redis.ping() == True
+        except (redis.ConnectionError, AssertionError):
+            raise ConnectionError(
+                f"Redis server is not running. {redis_host}:{redis_port}"
+            )
 
     def _limit(self, tokens: int):
         return Limiter(
@@ -107,3 +113,39 @@ class BaseAPILimiterRedis:
             tokens,
             self.redis,
         )
+
+    def clear_locks(self) -> bool:
+        """
+        This method will clear all locks associated with the model.
+        returns True if the locks were cleared successfully, otherwise returns False.
+        """
+        keys_to_delete = self.redis.keys(f"{self.model_name}_*")
+        if keys_to_delete:
+            self.redis.delete(*keys_to_delete)
+            return True
+        return False
+
+    def _is_locked(self, tokens: int) -> bool:
+        """
+        This method will check if there are any locks associated with the model.
+
+        Args:
+            tokens (int): The number of tokens to be used for the check.
+
+        Returns:
+            bool: True if the lock is held, False otherwise.
+        """
+        api_calls_key_exists = self.redis.exists(f"{self.model_name}_api_calls")
+        api_tokens_key_exists = self.redis.exists(f"{self.model_name}_api_tokens")
+
+        # If both keys exist and their values exceed the allowed limits, return True
+        if api_calls_key_exists and api_tokens_key_exists:
+            current_calls = int((self.redis.get(f"{self.model_name}_api_calls")))  # type: ignore
+            current_tokens = int((self.redis.get(f"{self.model_name}_api_tokens")))  # type: ignore
+            if (
+                current_calls >= self.max_calls
+                or current_tokens + tokens > self.max_tokens
+            ):
+                return True
+
+        return False
