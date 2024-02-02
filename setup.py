@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="openai-ratelimiter",
-    version="0.4",
+    version="0.5",
     packages=find_packages(exclude=["tests"]),
     description="A Python module that provides rate limiting capabilities for the OpenAI API, utilizing Redis as a caching service. It helps to manage API usage to avoid exceeding OpenAI's rate limits.",
     long_description=open("README.md").read(),
@@ -18,6 +18,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     install_requires=[
         x for x in open("./requirements.txt", "r+").readlines() if x.strip()

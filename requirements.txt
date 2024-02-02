@@ -1,3 +1,3 @@
-openai==0.27.8
-redis==4.5.5
-tiktoken==0.4.0
+openai
+redis
+tiktoken
