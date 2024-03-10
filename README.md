@@ -230,6 +230,10 @@ Note: The rate limits (RPM and TPM) and the Redis host and port provided in the 
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue on the GitHub repository. Before contributing, make sure to read through any contributing guidelines and adhere to the code of conduct.
 
+## Legal Disclaimer
+
+This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with OpenAI, or any of its subsidiaries or affiliates. The official OpenAI website can be found at https://openai.com.
+
 ## Author
 
 This library is created and maintained by Youssef Benhammouda. If you have any questions or feedback, you can reach out to him through the GitHub repository.
