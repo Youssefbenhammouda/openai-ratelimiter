@@ -43,7 +43,7 @@ class AsyncLimiter:
                     break
                 else:
                     await lock.release()  # Release the lock before sleeping
-                    time.sleep(self.period)  # wait for the limit to reset
+                    await asyncio.sleep(self.period)  # wait for the limit to reset
                     await lock.acquire()
 
             while True:
@@ -58,7 +58,7 @@ class AsyncLimiter:
                     break
                 else:
                     await lock.release()  # Release the lock before sleeping
-                    time.sleep(self.period)  # wait for the limit to reset
+                    await asyncio.sleep(self.period)  # wait for the limit to reset
                     await lock.acquire()
 
     async def __aexit__(
