@@ -36,6 +36,12 @@ The library provides two classes, `ChatCompletionLimiter` and `TextCompletionLim
 ```python
 from openai_ratelimiter import ChatCompletionLimiter
 import openai
+import redis
+
+redis_instance = redis.Redis(
+        host="localhost",
+        port=6379,
+    )
 
 openai.api_key = "{your API key}"
 model_name = "gpt-3.5-turbo-16k"
@@ -48,8 +54,8 @@ chatlimiter = ChatCompletionLimiter(
     model_name=model_name,
     RPM=3_000,
     TPM=250_000,
-    redis_host="localhost",
-    redis_port=6379,
+    redis_instance = redis_instance,
+    
 )
 with chatlimiter.limit(messages=messages, max_tokens=max_tokens):
     response = openai.ChatCompletion.create(
@@ -63,6 +69,12 @@ with chatlimiter.limit(messages=messages, max_tokens=max_tokens):
 ```python
 from openai_ratelimiter import TextCompletionLimiter
 import openai
+import redis
+
+redis_instance = redis.Redis(
+        host="localhost",
+        port=6379,
+    )
 
 openai.api_key = "{your API key}"
 model_name = "text-davinci-003"
@@ -72,8 +84,7 @@ textlimiter = TextCompletionLimiter(
     model_name=model_name,
     RPM=3_000,
     TPM=250_000,
-    redis_host="localhost",
-    redis_port=6379,
+    redis_instance = redis_instance,
 )
 with textlimiter.limit(prompt=prompt, max_tokens=max_tokens):
     response = openai.Completion.create(
@@ -100,8 +111,7 @@ limiter = AsyncChatCompletionLimiter(
         model_name=model_name,
         RPM=3_000,  
         TPM=180_000,  
-        redis_host="localhost",
-        redis_port=6379,
+        redis_instance=redis_instance
     )
 success = limiter.clear_locks()
 ```
@@ -119,8 +129,7 @@ limiter = AsyncChatCompletionLimiter(
         model_name=model_name,
         RPM=3_000,  
         TPM=180_000,  
-        redis_host="localhost",
-        redis_port=6379,
+        redis_instance=redis_instance
     )
 messages = [{"role": "system", "content": "You are a helpful assistant."}]
 max_tokens = 200
@@ -148,6 +157,12 @@ Here are some examples of how to use these classes:
 import asyncio
 import openai
 from openai_ratelimiter.asyncio import AsyncChatCompletionLimiter
+import redis.asyncio as redis
+
+redis_instance = redis.Redis(
+        host="localhost",
+        port=6379,
+    )
 
 openai.api_key = "{Openai API key}"
 model_name = "gpt-3.5-turbo-16k"
@@ -160,8 +175,7 @@ chatlimiter = AsyncChatCompletionLimiter(
     model_name=model_name,
     RPM=3_500,
     TPM=180_000,
-    redis_host="localhost",
-    redis_port=6379,
+    redis_instance = redis_instance,
 )
 
 async def send_request():
@@ -185,6 +199,12 @@ asyncio.run(main())
 import asyncio
 import openai
 from openai_ratelimiter.asyncio import AsyncTextCompletionLimiter
+import redis.asyncio as redis
+
+redis_instance = redis.Redis(
+        host="localhost",
+        port=6379,
+    )
 
 openai.api_key = "{OpenAI API key}"
 model_name = "text-davinci-003"
@@ -195,8 +215,8 @@ textlimiter = AsyncTextCompletionLimiter(
     model_name=model_name,
     RPM=3_500,
     TPM=180_000,
-    redis_host="localhost",
-    redis_port=6379,
+    redis_instance=redis_instance
+
 )
 
 async def send_request(_):
