@@ -1,3 +1,4 @@
-openai
-redis
-tiktoken
+openai==1.45.0
+redis==5.0.8
+tiktoken==0.7.0
+regex==2024.9.11

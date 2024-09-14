@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 import pytest
+import redis
 
 from openai_ratelimiter import ChatCompletionLimiter
 
@@ -17,13 +18,16 @@ class Executor(ThreadPoolExecutor):
 
 
 def test_TPM():
+    redis_instance = redis.Redis(
+        host="localhost",
+        port=6379,
+    )
     max_tokens = 200
     chatlimiter = ChatCompletionLimiter(
         model_name=model_name,
         RPM=3_000,  # we will ignore this by setting a high value, we will make another test to test this.
         TPM=1_125,  # 1_125 = 225 * 5
-        redis_host="localhost",
-        redis_port=6379,
+        redis_instance=redis_instance,
     )
     chatlimiter.clear_locks()
     with Executor(max_workers=1) as executor:

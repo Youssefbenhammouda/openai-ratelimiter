@@ -7,8 +7,7 @@ import tiktoken
 from redis.asyncio.lock import Lock
 
 # Tokenizer
-CL100K_ENCODER = tiktoken.get_encoding("cl100k_base")
-P50K_ENCODER = tiktoken.get_encoding("p50k_base")
+
 period = 60
 
 
@@ -72,12 +71,7 @@ class AsyncLimiter:
 
 class AsyncBaseAPILimiterRedis:
     def __init__(
-        self,
-        model_name: str,
-        RPM: int,
-        TPM: int,
-        redis_host: str = "localhost",
-        redis_port: int = 6379,
+        self, model_name: str, RPM: int, TPM: int, redis_instance: "redis.Redis[bytes]"
     ):
         """
         Initializer for the BaseAPILimiterRedis class.
@@ -88,8 +82,7 @@ class AsyncBaseAPILimiterRedis:
                        OpenAI account at https://platform.openai.com/account/rate-limits
             TPM (int): The maximum number of tokens per minute allowed. You can find your rate limits in your
                        OpenAI account at https://platform.openai.com/account/rate-limits
-            redis_host (str, optional): The hostname of the Redis server. Defaults to "localhost".
-            redis_port (int, optional): The port number of the Redis server. Defaults to 6379.
+            redis_instance (redis.Redis[bytes]): The redis instance.
 
         Creates an instance of the BaseAPILimiterRedis with the specified parameters, and connects to a Redis server
         at the specified host and port.
@@ -98,7 +91,8 @@ class AsyncBaseAPILimiterRedis:
         self.max_calls = RPM
         self.max_tokens = TPM
         self.period = period
-        self.redis: "redis.Redis[bytes]" = redis.Redis(host=redis_host, port=redis_port)
+        self.redis = redis_instance
+        self.encoder = tiktoken.encoding_for_model("gpt-3.5")
 
     async def check_redis(
         self,

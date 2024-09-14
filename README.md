@@ -3,7 +3,7 @@
 
 openai-ratelimiter is a simple and efficient rate limiter for the OpenAI API. It is designed to help prevent the API rate limit from being reached when using the OpenAI library. Currently, it supports only Redis as the caching service.
 
-> **Note**: This package has been tested with Python 3.11.4.
+> **Note**: This package has been tested lastly with Python 3.12.1
 
 ## Installation
 

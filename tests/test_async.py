@@ -1,6 +1,7 @@
 import asyncio
 
 import pytest
+import redis.asyncio as redis
 
 from openai_ratelimiter.asyncio import AsyncChatCompletionLimiter
 
@@ -13,13 +14,16 @@ messages = [
 
 @pytest.mark.asyncio()
 async def test_async_TPM():
+    redis_instance = redis.Redis(
+        host="localhost",
+        port=6379,
+    )
     max_tokens = 200
     achatlimiter = AsyncChatCompletionLimiter(
         model_name=model_name,
         RPM=3_000,  # we will ignore this by setting a high value, we will make another test to test this.
         TPM=1_125,  # 1_125 = 225 * 5
-        redis_host="localhost",
-        redis_port=6379,
+        redis_instance=redis_instance,
     )
     await achatlimiter.check_redis()
     await achatlimiter.clear_locks()
