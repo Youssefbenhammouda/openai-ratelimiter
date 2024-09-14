@@ -220,15 +220,20 @@ Note: The rate limits (RPM and TPM) and the Redis host and port provided in the 
 
 ## Future Plans
 
+- Support for new OpenAI features (Function calling,...)
 - In-memory caching
 - Limiting for embeddings
 - Limiting for DALL·E image model
 - Implementing more functions that provide information about the current state
 - Implement limiting for the organization level.
-
+- Langchain support.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue on the GitHub repository. Before contributing, make sure to read through any contributing guidelines and adhere to the code of conduct.
+
+## Legal Disclaimer
+
+This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with OpenAI, or any of its subsidiaries or affiliates. The official OpenAI website can be found at https://openai.com.
 
 ## Author
 
