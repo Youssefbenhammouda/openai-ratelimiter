@@ -1,3 +1,4 @@
+import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 import pytest
@@ -30,6 +31,7 @@ def test_TPM():
         redis_instance=redis_instance,
     )
     chatlimiter.clear_locks()
+    chatlimiter.period = 5
     with Executor(max_workers=1) as executor:
         for _ in range(5):
             future = executor.submit(
@@ -41,5 +43,8 @@ def test_TPM():
                 except TimeoutError:
                     pytest.fail("The request should have been completed.")
                 continue
-        if not chatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
-            pytest.fail("The request should have timed out.")
+    if not chatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
+        pytest.fail("The request should have timed out.")
+    time.sleep(7)
+    if chatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
+        pytest.fail("The lock should have expired.")

@@ -1,7 +1,7 @@
 
 # openai-ratelimiter
 
-openai-ratelimiter is a simple and efficient rate limiter for the OpenAI API. It is designed to help prevent the API rate limit from being reached when using the OpenAI library. Currently, it supports only Redis as the caching service.
+openai-ratelimiter is a simple and efficient rate limiter for the OpenAI API. It is designed to help prevent the API rate limit from being reached when using the OpenAI library. Currently, it  Redis as the caching service + in-memory caching only for async version.
 
 > **Note**: This package has been tested lastly with Python 3.12.1
 
@@ -153,6 +153,7 @@ Here are some examples of how to use these classes:
 
 ### AsyncChatCompletionLimiter
 
+- To use **redis** as the caching service:
 ```python
 import asyncio
 import openai
@@ -192,6 +193,42 @@ async def main():
 
 asyncio.run(main())
 ```
+
+- To use **in-memory** caching:
+```python
+import asyncio
+import openai
+from openai_ratelimiter.asyncio import AsyncChatCompletionLimiter
+
+
+openai.api_key = "{Openai API key}"
+model_name = "gpt-3.5-turbo-16k"
+messages = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "What is the capital of Morocco."},
+]
+max_tokens = 175
+chatlimiter = AsyncChatCompletionLimiter(
+    model_name=model_name,
+    RPM=3_500,
+    TPM=180_000,
+)
+
+async def send_request():
+    async with chatlimiter.limit(messages=messages, max_tokens=max_tokens):
+        response = await openai.ChatCompletion.acreate(
+            model=model_name, messages=messages, max_tokens=max_tokens
+        )
+        # process response here...
+
+async def main():
+    async with asyncio.TaskGroup() as tg:
+        for _ in range(100):
+            tg.create_task(send_request())
+
+asyncio.run(main())
+```
+
 
 ### AsyncTextCompletionLimiter
 
@@ -241,12 +278,13 @@ Note: The rate limits (RPM and TPM) and the Redis host and port provided in the 
 ## Future Plans
 
 - Support for new OpenAI features (Function calling,...)
-- In-memory caching
 - Limiting for embeddings
 - Limiting for DALL·E image model
 - Implementing more functions that provide information about the current state
 - Implement limiting for the organization level.
 - Langchain support.
+## Completed plans
+- In-memory caching ✅
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue on the GitHub repository. Before contributing, make sure to read through any contributing guidelines and adhere to the code of conduct.

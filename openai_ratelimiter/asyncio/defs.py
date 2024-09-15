@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Union
 
 from tiktoken.core import Encoding
 
-from .base import AsyncBaseAPILimiterRedis, AsyncLimiter
+from .base import AsyncBaseAPILimiterRedis, AsyncMemoryLimiter, AsyncRedisLimiter
 
 
 def num_tokens_consumed_by_chat_request(
@@ -45,7 +45,9 @@ def num_tokens_consumed_by_completion_request(
 
 
 class AsyncChatCompletionLimiter(AsyncBaseAPILimiterRedis):
-    def limit(self, messages: List[Dict[str, str]], max_tokens: int) -> AsyncLimiter:
+    def limit(
+        self, messages: List[Dict[str, str]], max_tokens: int
+    ) -> AsyncRedisLimiter | AsyncMemoryLimiter:
         tokens = num_tokens_consumed_by_chat_request(messages, self.encoder, max_tokens)
         return self._limit(tokens)
 
@@ -55,7 +57,9 @@ class AsyncChatCompletionLimiter(AsyncBaseAPILimiterRedis):
 
 
 class AsyncTextCompletionLimiter(AsyncBaseAPILimiterRedis):
-    def limit(self, prompt: str, max_tokens: int) -> AsyncLimiter:
+    def limit(
+        self, prompt: str, max_tokens: int
+    ) -> AsyncRedisLimiter | AsyncMemoryLimiter:
         tokens = num_tokens_consumed_by_completion_request(
             prompt, self.encoder, max_tokens
         )

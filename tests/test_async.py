@@ -13,7 +13,7 @@ messages = [
 
 
 @pytest.mark.asyncio()
-async def test_async_TPM():
+async def test_async_redis_TPM():
     redis_instance = redis.Redis(
         host="localhost",
         port=6379,
@@ -27,6 +27,7 @@ async def test_async_TPM():
     )
     await achatlimiter.check_redis()
     await achatlimiter.clear_locks()
+    achatlimiter.period = 5
 
     async def make_request():
         await achatlimiter.limit(messages=messages, max_tokens=max_tokens).__aenter__()
@@ -41,3 +42,37 @@ async def test_async_TPM():
             pytest.fail("The request should have been completed.")
     if not await achatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
         pytest.fail("The request should have timed out.")
+    await asyncio.sleep(7)
+    if await achatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
+        pytest.fail("The lock should have expired.")
+
+
+@pytest.mark.asyncio()
+async def test_async_memory_TPM():
+
+    max_tokens = 200
+    achatlimiter = AsyncChatCompletionLimiter(
+        model_name=model_name,
+        RPM=3_000,  # we will ignore this by setting a high value, we will make another test to test this.
+        TPM=1_125,  # 1_125 = 225 * 5
+    )
+    await achatlimiter.check_redis()
+    await achatlimiter.clear_locks()
+    achatlimiter.period = 5
+
+    async def make_request():
+        await achatlimiter.limit(messages=messages, max_tokens=max_tokens).__aenter__()
+
+    for _ in range(5):
+        try:
+            assert (
+                await achatlimiter.is_locked(messages=messages, max_tokens=max_tokens)
+            ) == False
+            await asyncio.wait_for(make_request(), timeout=2)
+        except (asyncio.TimeoutError, AssertionError):
+            pytest.fail("The request should have been completed.")
+    if not await achatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
+        pytest.fail("The request should have timed out.")
+    await asyncio.sleep(7)
+    if await achatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
+        pytest.fail("The lock should have expired.")
