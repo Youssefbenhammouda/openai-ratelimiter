@@ -94,6 +94,38 @@ with textlimiter.limit(prompt=prompt, max_tokens=max_tokens):
 ```
 Note: The rate limits (RPM and TPM) and the Redis host and port provided in the examples are not universal and should be tailored to your specific use case. Please adjust these parameters in accordance with the selected model and your account's rate limits. To find your specific rate limits, please refer to your OpenAI [account settings at OpenAI Rate Limits](https://platform.openai.com/account/rate-limits).
 
+### DalleLimiter
+
+```python
+from openai_ratelimiter import DalleLimiter
+import openai
+import redis
+
+redis_instance = redis.Redis(
+        host="localhost",
+        port=6379,
+    )
+
+openai.api_key = "{your API key}"
+model_name = "dall-e-2"
+prompt = "Create a vibrant and detailed landscape of Morocco. Include vast desert dunes with a warm golden hue, rugged mountain ranges in the background, and traditional Moroccan architecture such as adobe houses and intricate tile work. Add a clear blue sky with a few fluffy clouds, and perhaps a camel caravan in the distance to evoke the essence of Morocco’s unique scenery and culture."
+
+imglimiter = DalleLimiter(
+    model_name=model_name,
+    IPM=5,
+    redis_instance = redis_instance,
+)
+with imglimiter.limit():
+    response = client.images.generate(
+    model=model_name, 
+    prompt=prompt,   
+    size="1024x1024",
+    quality="standard",
+    n=1,
+    )
+    ...
+```
+
 
 
 ## Available Methods for Limiter Classes 
@@ -279,11 +311,11 @@ Note: The rate limits (RPM and TPM) and the Redis host and port provided in the 
 
 - Support for new OpenAI features (Function calling,...)
 - Limiting for embeddings
-- Limiting for DALL·E image model
 - Implementing more functions that provide information about the current state
 - Implement limiting for the organization level.
 - Langchain support.
 ## Completed plans
+- Limiting for DALL·E image model ✅
 - In-memory caching ✅
 ## Contributing
 

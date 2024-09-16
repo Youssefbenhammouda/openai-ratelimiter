@@ -247,12 +247,15 @@ class AsyncBaseAPILimiterRedis:
         self.max_tokens = TPM
         self.period = period
         self.redis = redis_instance
-        self.encoder = tiktoken.encoding_for_model(model_name)
+        try:
+            self.encoder = tiktoken.encoding_for_model(model_name)
+        except KeyError:
+            self.encoder = None
 
     def _limit(self, tokens: int) -> Union[AsyncRedisLimiter, AsyncMemoryLimiter]:
 
         if self.redis:
-            instance = AsyncRedisLimiter(
+            instance: Union[AsyncRedisLimiter, AsyncMemoryLimiter] = AsyncRedisLimiter(
                 self.model_name,
                 self.max_calls,
                 self.max_tokens,
@@ -272,7 +275,7 @@ class AsyncBaseAPILimiterRedis:
 
     async def _is_locked(self, tokens: int) -> bool:
         if self.redis:
-            instance = AsyncRedisLimiter(
+            instance: Union[AsyncRedisLimiter, AsyncMemoryLimiter] = AsyncRedisLimiter(
                 self.model_name,
                 self.max_calls,
                 self.max_tokens,
@@ -297,7 +300,7 @@ class AsyncBaseAPILimiterRedis:
 
     async def clear_locks(self) -> bool:
         if self.redis:
-            instance = AsyncRedisLimiter(
+            instance: Union[AsyncRedisLimiter, AsyncMemoryLimiter] = AsyncRedisLimiter(
                 self.model_name,
                 self.max_calls,
                 self.max_tokens,

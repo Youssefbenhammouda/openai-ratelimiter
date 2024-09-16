@@ -92,8 +92,10 @@ class BaseAPILimiterRedis:
             assert self.redis.ping() == True
         except (redis.ConnectionError, AssertionError) as e:
             raise ConnectionError(f"Redis server is not running.", e)
-
-        self.encoder = tiktoken.encoding_for_model(model_name)
+        try:
+            self.encoder = tiktoken.encoding_for_model(model_name)
+        except KeyError:
+            self.encoder = None
 
     def _limit(self, tokens: int):
         return Limiter(

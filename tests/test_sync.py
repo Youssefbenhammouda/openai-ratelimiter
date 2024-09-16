@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import pytest
 import redis
 
-from openai_ratelimiter import ChatCompletionLimiter
+from openai_ratelimiter import ChatCompletionLimiter, DalleLimiter
 
 model_name = "gpt-3.5-turbo-16k"
 messages = [
@@ -45,6 +45,36 @@ def test_TPM():
                 continue
     if not chatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
         pytest.fail("The request should have timed out.")
+    chatlimiter.limit(messages=messages, max_tokens=max_tokens).__enter__()
     time.sleep(7)
     if chatlimiter.is_locked(messages=messages, max_tokens=max_tokens):
+        pytest.fail("The lock should have expired.")
+
+
+def test_dalle():
+    redis_instance = redis.Redis(
+        host="localhost",
+        port=6379,
+    )
+
+    chatlimiter = DalleLimiter(
+        model_name="dall-e-2",
+        IPM=5,
+        redis_instance=redis_instance,
+    )
+    chatlimiter.clear_locks()
+    chatlimiter.period = 5
+    with Executor(max_workers=1) as executor:
+        for _ in range(5):
+            future = executor.submit(chatlimiter.limit().__enter__)
+            if 0 <= _ <= 4:
+                try:
+                    future.result(timeout=2)
+                except TimeoutError:
+                    pytest.fail("The request should have been completed.")
+                continue
+    if not chatlimiter.is_locked():
+        pytest.fail("The request should have timed out.")
+    time.sleep(7)
+    if chatlimiter.is_locked():
         pytest.fail("The lock should have expired.")
