@@ -67,7 +67,7 @@ class Limiter:
 
 class BaseAPILimiterRedis:
     def __init__(
-        self, model_name: str, RPM: int, TPM: int, redis_instance: "redis.Redis[bytes]"
+        self, model_name: str, RPM: int, TPM: int, redis_instance: "redis.Redis[bytes]",encoder_name:str|None=None
     ):
         """
         Initializer for the BaseAPILimiterRedis class.
@@ -92,10 +92,13 @@ class BaseAPILimiterRedis:
             assert self.redis.ping() == True
         except (redis.ConnectionError, AssertionError) as e:
             raise ConnectionError(f"Redis server is not running.", e)
-        try:
-            self.encoder = tiktoken.encoding_for_model(model_name)
-        except KeyError:
-            self.encoder = None
+        if not encoder_name:
+            try:
+                self.encoder = tiktoken.encoding_for_model(model_name)
+            except KeyError:
+                pass
+        else:
+            self.encoder = tiktoken.get_encoding(encoder_name)
 
     def _limit(self, tokens: int):
         return Limiter(
