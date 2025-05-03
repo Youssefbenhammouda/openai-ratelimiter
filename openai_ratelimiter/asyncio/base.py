@@ -226,7 +226,7 @@ class AsyncBaseAPILimiterRedis:
         model_name: str,
         RPM: int,
         TPM: int,
-        redis_instance: "redis.Redis[bytes] | None" = None,
+        redis_instance: "redis.Redis[bytes] | None" = None,encoder_name:str|None=None
     ):
         """
         Initializer for the BaseAPILimiterRedis class.
@@ -247,10 +247,13 @@ class AsyncBaseAPILimiterRedis:
         self.max_tokens = TPM
         self.period = period
         self.redis = redis_instance
-        try:
-            self.encoder = tiktoken.encoding_for_model(model_name)
-        except KeyError:
-            self.encoder = None
+        if not encoder_name:
+            try:
+                self.encoder = tiktoken.encoding_for_model(model_name)
+            except KeyError:
+                pass
+        else:
+            self.encoder = tiktoken.get_encoding(encoder_name)
 
     def _limit(self, tokens: int) -> Union[AsyncRedisLimiter, AsyncMemoryLimiter]:
 
