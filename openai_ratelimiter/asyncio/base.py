@@ -5,6 +5,7 @@ from typing import Dict, Optional, Type, Union
 import redis.asyncio as redis
 import tiktoken
 from redis.asyncio.lock import Lock
+from redis.exceptions import LockNotOwnedError
 
 # Tokenizer
 
@@ -32,17 +33,24 @@ class AsyncRedisLimiter:
     async def __aenter__(self):
         lock = Lock(self.redis, f"{self.model_name}_lock", timeout=self.period)
 
-        async with lock:
+        await lock.acquire()
+        try:
             while True:
                 self.current_calls = await self.redis.incr(
                     f"{self.model_name}_api_calls", amount=1
                 )
                 if self.current_calls == 1:
-                    await self.redis.expire(f"{self.model_name}_api_calls", self.period)
+                    await self.redis.expire(
+                        f"{self.model_name}_api_calls", self.period
+                    )
                 if self.current_calls <= self.max_calls:
                     break
                 else:
-                    await lock.release()  # Release the lock before sleeping
+                    try:
+                        if getattr(lock.local, "token", None):
+                            await lock.release()  # Release the lock before sleeping
+                    except LockNotOwnedError:
+                        pass
                     await asyncio.sleep(self.period)  # wait for the limit to reset
                     await lock.acquire()
 
@@ -57,9 +65,19 @@ class AsyncRedisLimiter:
                 if self.current_tokens <= self.max_tokens:
                     break
                 else:
-                    await lock.release()  # Release the lock before sleeping
+                    try:
+                        if getattr(lock.local, "token", None):
+                            await lock.release()  # Release the lock before sleeping
+                    except LockNotOwnedError:
+                        pass
                     await asyncio.sleep(self.period)  # wait for the limit to reset
                     await lock.acquire()
+        finally:
+            try:
+                if getattr(lock.local, "token", None):
+                    await lock.release()
+            except LockNotOwnedError:
+                pass
 
     async def __aexit__(
         self,
